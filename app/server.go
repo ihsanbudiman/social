@@ -2,9 +2,10 @@ package app
 
 import (
 	"social/config"
-	user_handler_rest "social/user/handler/rest"
-	user_repo_pg "social/user/repo/pg"
-	user_usecase "social/user/usecase"
+	thread_repo_pg "social/services/thread/repo/pg"
+	user_handler_rest "social/services/user/handler/rest"
+	user_repo_pg "social/services/user/repo/pg"
+	user_usecase "social/services/user/usecase"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -26,9 +27,17 @@ func (s *Server) Start() error {
 		panic(err)
 	}
 
+	// ====================== REPOSITORIES ======================
 	userRepoPg := user_repo_pg.NewUserRepoPG(db)
+	thread_repo_pg.NewThreadRepoPg(db)
+
+	// ====================== USECASES ======================
 	userUseCase := user_usecase.NewUserUseCase(userRepoPg)
+
+	// ====================== HANDLERS ======================
 	userHandlerRest := user_handler_rest.NewUserHandlerRest(s.app, userUseCase)
+
+	// ====================== ROUTES ======================
 	userHandlerRest.Run()
 
 	return s.app.Listen(":3000")

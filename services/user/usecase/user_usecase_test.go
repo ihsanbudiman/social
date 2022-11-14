@@ -3,10 +3,9 @@ package user_usecase
 import (
 	"context"
 	"errors"
-	"fmt"
 	"social/domain"
 	"social/helper"
-	user_repo_pg_mock "social/user/repo/pg/mock"
+	user_repo_pg_mock "social/services/user/repo/pg/mock"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -103,22 +102,29 @@ func Test_userUseCase_Register(t *testing.T) {
 		ctx := context.Background()
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		pwd := helper.GetPwd("ihsan123")
-		hashedPassword := helper.PashAndSalt(pwd)
 
-		userRepoPGMock.On("RegisterUser", ctx, &domain.User{
-			Email:    "ihsan@gmail.com",
-			Password: hashedPassword,
-			Name:     "ihsan",
-		}).Run(func(args mock.Arguments) {
-			fmt.Println(234567)
-		}).Return(nil)
+		userMatcher := mock.MatchedBy(func(user *domain.User) bool {
+
+			if user == nil {
+				return false
+			}
+
+			if user.Name == "" || user.Email == "" || user.Password == "" {
+				return false
+			}
+
+			compare := helper.ComparePasswords(user.Password, []byte("ihsan1234"))
+
+			return compare
+		})
+
+		userRepoPGMock.On("RegisterUser", ctx, userMatcher).Return(nil)
 
 		userUseCase := NewUserUseCase(userRepoPGMock)
 
 		_, err := userUseCase.Register(ctx, domain.User{
 			Email:    "ihsan@gmail.com",
-			Password: "ihsan123",
+			Password: "ihsan1234",
 			Name:     "ihsan",
 		})
 

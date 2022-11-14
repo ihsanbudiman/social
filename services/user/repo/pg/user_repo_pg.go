@@ -61,7 +61,7 @@ func (u userRepoPg) GetByEmail(ctx context.Context, email string) (*domain.User,
 	return &user, nil
 }
 
-func NewUserRepoPG(db *gorm.DB) domain.UserRepoPG {
+func NewUserRepoPG(db *gorm.DB) domain.UserRepo {
 	return &userRepoPg{
 		db: db,
 	}

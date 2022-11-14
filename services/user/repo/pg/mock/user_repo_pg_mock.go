@@ -32,12 +32,9 @@ func (m userRepoPGMock) GetByID(ctx context.Context, ID uint) (domain.User, erro
 
 func (m userRepoPGMock) RegisterUser(ctx context.Context, user *domain.User) error {
 
-	userData := domain.User{}
-	args := m.Called(ctx, &userData)
+	args := m.Called(ctx, user)
 
-	// userData := args.Get(1).(*domain.User)
-
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func NewUserRepoPGMock() userRepoPGMock {

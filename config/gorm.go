@@ -19,7 +19,7 @@ func NewGormConnection() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(&domain.User{})
+	err = db.AutoMigrate(&domain.User{}, &domain.Thread{}, &domain.ThreadPhoto{}, &domain.Like{})
 	if err != nil {
 		return nil, err
 	}

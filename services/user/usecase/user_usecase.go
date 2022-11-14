@@ -8,7 +8,7 @@ import (
 )
 
 type userUseCase struct {
-	pgRepo domain.UserRepoPG
+	pgRepo domain.UserRepo
 }
 
 // Register implements domain.UserUseCase
@@ -29,11 +29,6 @@ func (u userUseCase) Register(ctx context.Context, user domain.User) (domain.Use
 	err := u.pgRepo.RegisterUser(ctx, &user)
 	if err != nil {
 		return domain.User{}, err
-	}
-
-	compare := helper.ComparePasswords(user.Password, pwd)
-	if !compare {
-		return domain.User{}, errors.New("failed on compare password")
 	}
 
 	return user, nil
@@ -76,11 +71,10 @@ func (u userUseCase) UpdateUser(ctx context.Context, user domain.User) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func NewUserUseCase(pgRepo domain.UserRepoPG) domain.UserUseCase {
+func NewUserUseCase(pgRepo domain.UserRepo) domain.UserUseCase {
 	return &userUseCase{
 		pgRepo: pgRepo,
 	}

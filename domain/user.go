@@ -13,7 +13,7 @@ type User struct {
 	Password string `json:"password"`
 }
 
-type UserRepoPG interface {
+type UserRepo interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id uint) (User, error)
 	UpdateUser(ctx context.Context, user *User) error
