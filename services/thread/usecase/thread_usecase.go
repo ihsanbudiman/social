@@ -12,6 +12,16 @@ type threadUseCase struct {
 	repo domain.ThreadRepo
 }
 
+// InsertThreadPhoto implements domain.ThreadUseCase
+func (t threadUseCase) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
+	err := t.repo.InsertThreadPhoto(ctx, threadPhoto)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetReplies implements domain.ThreadUseCase
 func (t threadUseCase) GetReplies(ctx context.Context, threadID uint, page int) ([]domain.Thread, error) {
 	if threadID == 0 {
@@ -33,13 +43,25 @@ func (t threadUseCase) GetReplies(ctx context.Context, threadID uint, page int) 
 // GetThread implements domain.ThreadUseCase
 func (t threadUseCase) GetThread(ctx context.Context, threadID uint) (domain.Thread, error) {
 	if threadID == 0 {
-		return domain.Thread{}, nil
+		return domain.Thread{}, errors.New("thread id is required")
 	}
 
 	thread, err := t.repo.GetThread(ctx, threadID)
 	if err != nil {
 		return domain.Thread{}, err
 	}
+
+	if thread.ID == 0 {
+		return domain.Thread{}, errors.New("thread is not exist")
+	}
+
+	// get replies
+	replies, err := t.repo.GetReplies(ctx, threadID, 1)
+	if err != nil {
+		return domain.Thread{}, err
+	}
+
+	thread.Replies = &replies
 
 	return thread, nil
 }
@@ -53,6 +75,18 @@ func (t threadUseCase) CreateThread(ctx context.Context, thread domain.Thread) (
 
 	if thread.Content == "" {
 		return domain.Thread{}, errors.New("content is required")
+	}
+
+	// check if replyto is exist
+	if thread.ReplyTo.Valid {
+		data, err := t.repo.GetThread(ctx, uint(thread.ReplyTo.Int64))
+		if err != nil {
+			return domain.Thread{}, err
+		}
+
+		if data.ID == 0 {
+			return domain.Thread{}, errors.New("thread that you want to reply is not exist")
+		}
 	}
 
 	// insert thread

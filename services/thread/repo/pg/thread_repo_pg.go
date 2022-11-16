@@ -2,6 +2,8 @@ package thread_repo_pg
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"social/domain"
 
 	"gorm.io/gorm"
@@ -16,9 +18,10 @@ type threadRepoPg struct {
 func (t threadRepoPg) GetReplies(ctx context.Context, threadID uint, page int) ([]domain.Thread, error) {
 	var threads []domain.Thread
 
-	err := t.db.Where("thread_id = ?", threadID).Limit(10).Offset((page - 1) * 10).Find(&threads).Error
+	err := t.db.Where("reply_to = ?", threadID).Limit(10).Offset((page - 1) * 10).Find(&threads).Error
 	if err != nil {
-		return threads, err
+		fmt.Println(err)
+		return threads, errors.New("failed to get replies")
 	}
 
 	return threads, nil
@@ -36,7 +39,8 @@ func (t threadRepoPg) GetThread(ctx context.Context, threadID uint) (domain.Thre
 	}
 
 	if err != nil {
-		return thread, err
+		fmt.Println(err)
+		return thread, errors.New("failed to get thread")
 	}
 
 	return thread, nil
@@ -53,17 +57,21 @@ func (t threadRepoPg) WithTx(ctx context.Context, tx *gorm.DB) domain.ThreadRepo
 func (t threadRepoPg) Insert(ctx context.Context, thread *domain.Thread) error {
 	err := t.db.Create(thread).Error
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return errors.New("failed to insert thread")
 	}
 
 	return nil
 }
 
 // InsertThreadPhoto implements domain.ThreadRepo
-func (t threadRepoPg) InsertThreadPhoto(ctx context.Context, threadPhoto *[]domain.ThreadPhoto) error {
+func (t threadRepoPg) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
+	fmt.Println(threadPhoto)
+
 	err := t.db.Create(threadPhoto).Error
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return errors.New("failed to insert thread photo")
 	}
 
 	return nil

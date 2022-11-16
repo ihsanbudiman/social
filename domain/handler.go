@@ -1,5 +1,7 @@
 package domain
 
+import "gorm.io/gorm"
+
 type Handler interface {
-	Run()
+	Run(db *gorm.DB)
 }

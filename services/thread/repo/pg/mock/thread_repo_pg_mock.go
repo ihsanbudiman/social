@@ -31,7 +31,7 @@ func (t ThreadRepoPgMock) Insert(ctx context.Context, thread *domain.Thread) err
 }
 
 // InsertThreadPhoto implements domain.ThreadRepo
-func (t ThreadRepoPgMock) InsertThreadPhoto(ctx context.Context, threadPhoto *[]domain.ThreadPhoto) error {
+func (t ThreadRepoPgMock) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
 	args := t.Called(ctx, threadPhoto)
 	return args.Error(0)
 }

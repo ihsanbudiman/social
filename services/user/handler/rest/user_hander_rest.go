@@ -5,6 +5,7 @@ import (
 	"social/domain"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type userHandlerRest struct {
@@ -22,7 +23,7 @@ func NewUserHandlerRest(app *fiber.App, usecase domain.UserUseCase) domain.Handl
 }
 
 // Run define need to run
-func (u *userHandlerRest) Run() {
+func (u *userHandlerRest) Run(db *gorm.DB) {
 	userRoute := u.app.Group("/user")
 
 	userRoute.Get("/login", u.Login)

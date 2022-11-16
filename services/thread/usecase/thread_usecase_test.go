@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 )
 
@@ -33,17 +34,17 @@ func Test_threadUseCase_GetReplies(t *testing.T) {
 					ID: 1,
 				},
 				Content:    "1234567890",
-				ReplyTo:    1,
+				ReplyTo:    null.IntFrom(1),
 				ReplyCount: 1,
 				LikeCount:  1,
 				UserID:     1,
-				User: domain.User{
+				User: &domain.User{
 					Model: gorm.Model{
 						ID: 1,
 					},
 				},
-				Replies:      []domain.Thread{},
-				ThreadPhotos: []domain.ThreadPhoto{},
+				Replies:      &[]domain.Thread{},
+				ThreadPhotos: &[]domain.ThreadPhoto{},
 			},
 		}, nil)
 		threadUseCase := NewThreadUseCase(threadRepoMock)
