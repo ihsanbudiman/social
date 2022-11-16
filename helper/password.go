@@ -2,6 +2,7 @@ package helper
 
 import (
 	"log"
+	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,7 +17,7 @@ func GetPwd(password string) []byte {
 	return []byte(password)
 }
 
-func PashAndSalt(pwd []byte) string {
+func HashAndSalt(pwd []byte) string {
 
 	// Use GenerateFromPassword to hash & salt pwd.
 	// MinCost is just an integer constant provided by the bcrypt
@@ -43,4 +44,16 @@ func ComparePasswords(hashedPwd string, plainPwd []byte) bool {
 	}
 
 	return true
+}
+
+// validate strong password
+func IsStrongPassword(password string) bool {
+	// at least one number, one lowercase and one uppercase letter
+	// at least eight characters
+	var hasNumber = regexp.MustCompile(`[0-9]+`).MatchString
+	var hasLowerChar = regexp.MustCompile(`[a-z]+`).MatchString
+	var hasUpperChar = regexp.MustCompile(`[A-Z]+`).MatchString
+	var hasMinEightChar = regexp.MustCompile(`.{8,}`).MatchString
+
+	return hasNumber(password) && hasLowerChar(password) && hasUpperChar(password) && hasMinEightChar(password)
 }

@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"social/constant"
 	"social/helper"
 
@@ -41,6 +42,8 @@ func JWT() fiber.Handler {
 			})
 
 		}
+
+		fmt.Println(claims)
 
 		// set user data in context
 		c.Locals("user", claims.User)

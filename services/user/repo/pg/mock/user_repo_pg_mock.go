@@ -11,10 +11,10 @@ type userRepoPGMock struct {
 	mock.Mock
 }
 
-func (m userRepoPGMock) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (m userRepoPGMock) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 	args := m.Called(ctx, email)
 
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(domain.User), args.Error(1)
 }
 
 func (m userRepoPGMock) UpdateUser(ctx context.Context, user *domain.User) error {
@@ -35,6 +35,12 @@ func (m userRepoPGMock) RegisterUser(ctx context.Context, user *domain.User) err
 	args := m.Called(ctx, user)
 
 	return args.Error(0)
+}
+
+func (m userRepoPGMock) GetByEmailAndUsername(ctx context.Context, email string, username string) (domain.User, error) {
+	args := m.Called(ctx, email, username)
+
+	return args.Get(0).(domain.User), args.Error(1)
 }
 
 func NewUserRepoPGMock() userRepoPGMock {

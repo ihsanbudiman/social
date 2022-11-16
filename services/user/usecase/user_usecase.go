@@ -5,6 +5,8 @@ import (
 	"errors"
 	"social/domain"
 	"social/helper"
+
+	"gorm.io/gorm"
 )
 
 type userUseCase struct {
@@ -14,19 +16,51 @@ type userUseCase struct {
 // Register implements domain.UserUseCase
 func (u userUseCase) Register(ctx context.Context, user domain.User) (domain.User, error) {
 
+	if user.Email == "" {
+		return domain.User{}, errors.New("email is required")
+	}
+
 	// validate email
 	isValidEmail := helper.IsValidEmail(user.Email)
 	if !isValidEmail {
 		return domain.User{}, errors.New("invalid email")
 	}
 
+	if user.Name == "" {
+		return domain.User{}, errors.New("name is required")
+	}
+
+	if user.Password == "" {
+		return domain.User{}, errors.New("password is required")
+	}
+
+	// check password is strong enough
+	if isStrongPassword := helper.IsStrongPassword(user.Password); !isStrongPassword {
+		return domain.User{}, errors.New("password is not strong enough, minimum 8 characters, at least one uppercase letter, one lowercase letter, one number and one special character")
+	}
+
+	if user.Username == "" {
+		return domain.User{}, errors.New("username is required")
+	}
+
+	// check if email already exists
+	otherUser, err := u.pgRepo.GetByEmailAndUsername(ctx, user.Email, user.Username)
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return domain.User{}, err
+	}
+
+	if otherUser.ID != 0 {
+		return domain.User{}, errors.New("email or username already exists")
+	}
+
 	// hash password
 	pwd := helper.GetPwd(user.Password)
-	hashedPassword := helper.PashAndSalt(pwd)
+	hashedPassword := helper.HashAndSalt(pwd)
 
 	user.Password = hashedPassword
 
-	err := u.pgRepo.RegisterUser(ctx, &user)
+	err = u.pgRepo.RegisterUser(ctx, &user)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -35,25 +69,25 @@ func (u userUseCase) Register(ctx context.Context, user domain.User) (domain.Use
 }
 
 // CheckLogin implements domain.UserUseCase
-func (u userUseCase) LoginByEmail(ctx context.Context, email string, password string) (*domain.User, error) {
+func (u userUseCase) LoginByEmail(ctx context.Context, email string, password string) (domain.User, error) {
 
 	isValidEmail := helper.IsValidEmail(email)
 	if !isValidEmail {
-		return nil, errors.New("invalid email")
+		return domain.User{}, errors.New("invalid email")
 	}
 
 	pwd := helper.GetPwd(password)
-	// hashedPassword := helper.PashAndSalt(pwd)
+	// hashedPassword := helper.HashAndSalt(pwd)
 
 	user, err := u.pgRepo.GetByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return domain.User{}, err
 	}
 
 	// compare password
 	isValidPassword := helper.ComparePasswords(user.Password, pwd)
 	if !isValidPassword {
-		return nil, errors.New("username atau password salah")
+		return domain.User{}, errors.New("username atau password salah")
 	}
 
 	return user, nil

@@ -32,6 +32,8 @@ func (t threadRepoPg) GetThread(ctx context.Context, threadID uint) (domain.Thre
 	var thread domain.Thread
 	err := t.db.
 		Preload("ThreadPhotos").
+		Preload("User").
+		Preload("Replies").
 		First(&thread, threadID).Error
 
 	if err == gorm.ErrRecordNotFound {
@@ -66,8 +68,6 @@ func (t threadRepoPg) Insert(ctx context.Context, thread *domain.Thread) error {
 
 // InsertThreadPhoto implements domain.ThreadRepo
 func (t threadRepoPg) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
-	fmt.Println(threadPhoto)
-
 	err := t.db.Create(threadPhoto).Error
 	if err != nil {
 		fmt.Println(err)

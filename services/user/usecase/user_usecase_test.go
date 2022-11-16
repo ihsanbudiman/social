@@ -33,7 +33,7 @@ func Test_userUseCase_CheckLogin(t *testing.T) {
 		password := "ihsan"
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(&domain.User{}, errors.New("error"))
+		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(domain.User{}, errors.New("error"))
 
 		userUseCase := NewUserUseCase(userRepoPGMock)
 
@@ -49,10 +49,10 @@ func Test_userUseCase_CheckLogin(t *testing.T) {
 
 		password := "ihsan"
 		pwd := helper.GetPwd(password)
-		hashedPassword := helper.PashAndSalt(pwd)
+		hashedPassword := helper.HashAndSalt(pwd)
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(&domain.User{
+		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(domain.User{
 			Model: gorm.Model{
 				ID: 1,
 			},
@@ -75,10 +75,10 @@ func Test_userUseCase_CheckLogin(t *testing.T) {
 
 		password := "ihsan"
 		pwd := helper.GetPwd(password)
-		hashedPassword := helper.PashAndSalt(pwd)
+		hashedPassword := helper.HashAndSalt(pwd)
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(&domain.User{
+		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(domain.User{
 			Model: gorm.Model{
 				ID: 1,
 			},
@@ -109,23 +109,25 @@ func Test_userUseCase_Register(t *testing.T) {
 				return false
 			}
 
-			if user.Name == "" || user.Email == "" || user.Password == "" {
+			if user.Name == "" || user.Email == "" || user.Password == "" || user.Username == "" {
 				return false
 			}
 
-			compare := helper.ComparePasswords(user.Password, []byte("ihsan1234"))
+			compare := helper.ComparePasswords(user.Password, []byte("!H%$Nlkj123"))
 
 			return compare
 		})
 
 		userRepoPGMock.On("RegisterUser", ctx, userMatcher).Return(nil)
+		userRepoPGMock.On("GetByEmailAndUsername", ctx, "ihsan@gmail.com", "ihsanbudiman").Return(domain.User{}, nil)
 
 		userUseCase := NewUserUseCase(userRepoPGMock)
 
 		_, err := userUseCase.Register(ctx, domain.User{
 			Email:    "ihsan@gmail.com",
-			Password: "ihsan1234",
+			Password: "!H%$Nlkj123",
 			Name:     "ihsan",
+			Username: "ihsanbudiman",
 		})
 
 		if err != nil {

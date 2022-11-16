@@ -13,6 +13,18 @@ type userRepoPg struct {
 	db *gorm.DB
 }
 
+// GetByEmailAndUsername implements domain.UserRepo
+func (u userRepoPg) GetByEmailAndUsername(ctx context.Context, email string, username string) (domain.User, error) {
+	var user domain.User
+
+	err := u.db.Where("email = ? OR username = ?", email, username).First(&user).Error
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	return user, nil
+}
+
 // RegisterUser implements domain.UserRepoPG
 func (u userRepoPg) RegisterUser(ctx context.Context, user *domain.User) error {
 	err := u.db.Create(user).Error
@@ -50,15 +62,15 @@ func (u userRepoPg) UpdateUser(ctx context.Context, user *domain.User) error {
 }
 
 // CheckLogin implements domain.UserRepoPG
-func (u userRepoPg) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (u userRepoPg) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 	var user domain.User
 
 	err := u.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
-		return nil, err
+		return domain.User{}, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func NewUserRepoPG(db *gorm.DB) domain.UserRepo {
