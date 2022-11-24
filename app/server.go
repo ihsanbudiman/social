@@ -10,6 +10,7 @@ import (
 	user_repo_pg "social/services/user/repo/pg"
 	user_usecase "social/services/user/usecase"
 
+	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -29,6 +30,7 @@ func (s *Server) Start() error {
 	if err != nil {
 		panic(err)
 	}
+	s.app.Use(otelfiber.Middleware("my-server"))
 
 	// ====================== REPOSITORIES ======================
 	userRepoPg := user_repo_pg.NewUserRepoPG(db)

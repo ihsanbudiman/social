@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"social/domain"
+	"social/opentelemetry"
 )
 
 type userRepoPg struct {
@@ -64,6 +65,10 @@ func (u userRepoPg) UpdateUser(ctx context.Context, user *domain.User) error {
 // CheckLogin implements domain.UserRepoPG
 func (u userRepoPg) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 	var user domain.User
+	tracer := opentelemetry.GetTracer()
+
+	_, span := tracer.Start(ctx, "user_repo_pg.GetByEmail")
+	defer span.End()
 
 	err := u.db.Where("email = ?", email).First(&user).Error
 	if err != nil {

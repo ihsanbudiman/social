@@ -13,6 +13,21 @@ services:
       - pgdata:/var/lib/postgresql/data
       - pgconf:/etc/postgresql
       - pglog:/var/log/postgresql
+  
+  client-jaeger:
+    image: jaegertracing/all-in-one:1.22.0
+    container_name: client-jaeger
+    ports:
+      - "14268:14268"   # jaeger-collector HTTP server (tracer provider)
+      - "16686:16686"   # HTTP server (browser UI)
+    networks:
+      - social
+    restart: always
+
+# network
+networks:
+  social:
+    driver: bridge
 
 volumes:
   pgdata:

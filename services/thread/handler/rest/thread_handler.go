@@ -208,7 +208,7 @@ func (t *threadHandler) GetReplies(c *fiber.Ctx) error {
 	})
 }
 
-func NewThreadHandler(app *fiber.App, usecase domain.ThreadUseCase) domain.Handler {
+func NewThreadHandler(app *fiber.App, usecase domain.ThreadUseCase) *threadHandler {
 	return &threadHandler{
 		app:     app,
 		usecase: usecase,

@@ -14,6 +14,35 @@ type threadRepoPg struct {
 	db *gorm.DB
 }
 
+// LikeThread implements domain.ThreadRepo
+func (t threadRepoPg) LikeThread(ctx context.Context, threadID uint, userID uint) (domain.Like, error) {
+	var like domain.Like
+	err := t.db.Where("thread_id = ? AND user_id = ?", threadID, userID).First(&like).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return like, err
+	}
+
+	if like.ID != 0 {
+		return like, errors.New("user has")
+	}
+
+	like.ThreadID = threadID
+	like.UserID = userID
+
+	err = t.db.Create(&like).Error
+	if err != nil {
+		return like, errors.New("failed to like thread")
+	}
+
+	return like, nil
+}
+
+func (t threadRepoPg) UnlikeThread(ctx context.Context, thread domain.Thread) error {
+	err := t.db.Where("thread_id = ? AND user_id = ?", thread.ID, thread.UserID).Delete(&thread).Error
+
+	return err
+}
+
 // GetReplies implements domain.ThreadRepo
 func (t threadRepoPg) GetReplies(ctx context.Context, threadID uint, page int) ([]domain.Thread, error) {
 	var threads []domain.Thread

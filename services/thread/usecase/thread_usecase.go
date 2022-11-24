@@ -12,6 +12,11 @@ type threadUseCase struct {
 	repo domain.ThreadRepo
 }
 
+// LikeThread implements domain.ThreadUseCase
+func (t threadUseCase) LikeThread(ctx context.Context, threadID uint) (bool, error) {
+	return false, nil
+}
+
 // InsertThreadPhoto implements domain.ThreadUseCase
 func (t threadUseCase) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
 	err := t.repo.InsertThreadPhoto(ctx, threadPhoto)

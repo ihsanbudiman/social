@@ -4,6 +4,7 @@ import (
 	"social/constant"
 	"social/domain"
 	"social/helper"
+	"social/opentelemetry"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -16,7 +17,7 @@ type userHandlerRest struct {
 	usecase domain.UserUseCase
 }
 
-func NewUserHandlerRest(app *fiber.App, usecase domain.UserUseCase) domain.Handler {
+func NewUserHandlerRest(app *fiber.App, usecase domain.UserUseCase) *userHandlerRest {
 	return &userHandlerRest{
 		app:     app,
 		usecase: usecase,
@@ -44,8 +45,11 @@ func (u *userHandlerRest) Login(c *fiber.Ctx) error {
 		}
 	}()
 
-	ctx := c.Context()
+	ctx := c.UserContext()
 
+	tracer := opentelemetry.GetTracer()
+	ctrlCtx, span := tracer.Start(ctx, "Login")
+	defer span.End()
 	// get email and password from request
 	var req LoginRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -56,7 +60,7 @@ func (u *userHandlerRest) Login(c *fiber.Ctx) error {
 	}
 
 	// call usecase
-	user, err := u.usecase.LoginByEmail(ctx, req.Email, req.Password)
+	user, err := u.usecase.LoginByEmail(ctrlCtx, req.Email, req.Password)
 	if err != nil {
 		return c.Status(constant.HTTPResponseBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
@@ -67,7 +71,7 @@ func (u *userHandlerRest) Login(c *fiber.Ctx) error {
 	// remove password from user
 	user.Password = ""
 
-	jwt, err := helper.GenerateToken(user)
+	jwt, err := helper.GenerateToken(ctrlCtx, user)
 	if err != nil {
 		return c.Status(constant.HTTPResponseInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
@@ -125,7 +129,7 @@ func (u *userHandlerRest) Register(c *fiber.Ctx) error {
 	// remove password from user so it won't be sent to client
 	user.Password = ""
 
-	jwt, err := helper.GenerateToken(user)
+	jwt, err := helper.GenerateToken(ctx, user)
 	if err != nil {
 		return c.Status(constant.HTTPResponseInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

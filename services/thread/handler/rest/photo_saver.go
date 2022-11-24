@@ -17,14 +17,12 @@ func PhotoSaver(c *fiber.Ctx, photos *[]domain.ThreadPhoto, images ...string) er
 	for i, image := range images {
 		image, err := c.FormFile(image)
 		if err != nil {
-
 			err = fmt.Errorf("error when get image %d: %w", i, err)
 			break
 		} else {
 
 			extImage, err := helper.GetFileExtensionFromUrl(image.Filename)
 			if err != nil {
-
 				err = fmt.Errorf("error when get image %d extension: %w", i, err)
 				break
 			}
@@ -34,7 +32,6 @@ func PhotoSaver(c *fiber.Ctx, photos *[]domain.ThreadPhoto, images ...string) er
 			err = c.SaveFile(image, fmt.Sprintf(".%s/%s", constant.THREAD_IMAGE, imageName))
 
 			if err != nil {
-
 				err = fmt.Errorf("error when save image %d: %w", i, err)
 				break
 			}

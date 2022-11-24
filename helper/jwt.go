@@ -1,8 +1,10 @@
 package helper
 
 import (
+	"context"
 	"fmt"
 	"social/domain"
+	"social/opentelemetry"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -10,7 +12,12 @@ import (
 
 var jwtSecret = []byte("dfugrshnguregniuiurhgi4oeufidyunhuwbxru3n687aw8oyeiusngwiy")
 
-func GenerateToken(userData domain.User) (string, error) {
+func GenerateToken(ctx context.Context, userData domain.User) (string, error) {
+	tracer := opentelemetry.GetTracer()
+
+	_, span := tracer.Start(ctx, "JWT.GenerateToken")
+	defer span.End()
+
 	claims := domain.JWTClaim{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),

@@ -12,6 +12,12 @@ type ThreadRepoPgMock struct {
 	mock.Mock
 }
 
+// LikeThread implements domain.ThreadRepo
+func (t ThreadRepoPgMock) LikeThread(ctx context.Context, threadID uint, userID uint) (domain.Like, error) {
+	args := t.Called(ctx, threadID, userID)
+	return args.Get(0).(domain.Like), args.Error(1)
+}
+
 // GetReplies implements domain.ThreadRepo
 func (t ThreadRepoPgMock) GetReplies(ctx context.Context, threadID uint, page int) ([]domain.Thread, error) {
 	args := t.Called(ctx, threadID, page)
@@ -33,6 +39,11 @@ func (t ThreadRepoPgMock) Insert(ctx context.Context, thread *domain.Thread) err
 // InsertThreadPhoto implements domain.ThreadRepo
 func (t ThreadRepoPgMock) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
 	args := t.Called(ctx, threadPhoto)
+	return args.Error(0)
+}
+
+func (t ThreadRepoPgMock) UnlikeThread(ctx context.Context, thread domain.Thread) error {
+	args := t.Called(ctx, thread)
 	return args.Error(0)
 }
 

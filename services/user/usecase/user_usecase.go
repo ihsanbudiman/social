@@ -5,6 +5,7 @@ import (
 	"errors"
 	"social/domain"
 	"social/helper"
+	"social/opentelemetry"
 
 	"gorm.io/gorm"
 )
@@ -70,22 +71,32 @@ func (u userUseCase) Register(ctx context.Context, user domain.User) (domain.Use
 
 // CheckLogin implements domain.UserUseCase
 func (u userUseCase) LoginByEmail(ctx context.Context, email string, password string) (domain.User, error) {
+	tracer := opentelemetry.GetTracer()
+
+	ucaseCtx, span := tracer.Start(ctx, "user_usecase.LoginByEmail")
+	defer span.End()
 
 	isValidEmail := helper.IsValidEmail(email)
 	if !isValidEmail {
 		return domain.User{}, errors.New("invalid email")
 	}
 
+	_, spanGetPWD := tracer.Start(ucaseCtx, "user_usecase.LoginByEmail.GetPWD")
+	defer spanGetPWD.End()
 	pwd := helper.GetPwd(password)
+
 	// hashedPassword := helper.HashAndSalt(pwd)
 
-	user, err := u.pgRepo.GetByEmail(ctx, email)
+	user, err := u.pgRepo.GetByEmail(ucaseCtx, email)
 	if err != nil {
 		return domain.User{}, err
 	}
 
 	// compare password
+	_, spanComparePassword := tracer.Start(ucaseCtx, "user_usecase.LoginByEmail.ComparePassword")
 	isValidPassword := helper.ComparePasswords(user.Password, pwd)
+	defer spanComparePassword.End()
+
 	if !isValidPassword {
 		return domain.User{}, errors.New("username atau password salah")
 	}
