@@ -39,7 +39,8 @@ type ThreadRepo interface {
 	GetReplies(ctx context.Context, threadID uint, page int) ([]Thread, error)
 	WithTx(ctx context.Context, tx *gorm.DB) ThreadRepo
 	LikeThread(ctx context.Context, threadID uint, userID uint) (Like, error)
-	UnlikeThread(ctx context.Context, thread Thread) error
+	UnlikeThread(ctx context.Context, threadID, userID uint) error
+	CheckLiked(ctx context.Context, threadID, userID uint) (bool, error)
 }
 
 type ThreadUseCase interface {
@@ -47,6 +48,6 @@ type ThreadUseCase interface {
 	InsertThreadPhoto(ctx context.Context, threadPhoto *ThreadPhoto) error
 	GetThread(ctx context.Context, threadID uint) (Thread, error)
 	GetReplies(ctx context.Context, threadID uint, page int) ([]Thread, error)
-	LikeThread(ctx context.Context, threadID uint) (bool, error)
+	LikeThread(ctx context.Context, threadID, userID uint) error
 	WithTx(ctx context.Context, tx *gorm.DB) ThreadUseCase
 }

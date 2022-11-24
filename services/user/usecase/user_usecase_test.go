@@ -14,6 +14,10 @@ import (
 
 func Test_userUseCase_CheckLogin(t *testing.T) {
 
+	contextMatcher := mock.MatchedBy(func(ctx context.Context) bool {
+		return ctx != nil
+	})
+
 	t.Run("fail email", func(t *testing.T) {
 		ctx := context.Background()
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
@@ -33,7 +37,7 @@ func Test_userUseCase_CheckLogin(t *testing.T) {
 		password := "ihsan"
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(domain.User{}, errors.New("error"))
+		userRepoPGMock.On("GetByEmail", contextMatcher, "ihsan@gmail.com").Return(domain.User{}, errors.New("error"))
 
 		userUseCase := NewUserUseCase(userRepoPGMock)
 
@@ -52,7 +56,7 @@ func Test_userUseCase_CheckLogin(t *testing.T) {
 		hashedPassword := helper.HashAndSalt(pwd)
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(domain.User{
+		userRepoPGMock.On("GetByEmail", contextMatcher, "ihsan@gmail.com").Return(domain.User{
 			Model: gorm.Model{
 				ID: 1,
 			},
@@ -78,7 +82,7 @@ func Test_userUseCase_CheckLogin(t *testing.T) {
 		hashedPassword := helper.HashAndSalt(pwd)
 
 		userRepoPGMock := user_repo_pg_mock.NewUserRepoPGMock()
-		userRepoPGMock.On("GetByEmail", ctx, "ihsan@gmail.com").Return(domain.User{
+		userRepoPGMock.On("GetByEmail", contextMatcher, "ihsan@gmail.com").Return(domain.User{
 			Model: gorm.Model{
 				ID: 1,
 			},

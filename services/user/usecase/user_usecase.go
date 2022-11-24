@@ -82,8 +82,8 @@ func (u userUseCase) LoginByEmail(ctx context.Context, email string, password st
 	}
 
 	_, spanGetPWD := tracer.Start(ucaseCtx, "user_usecase.LoginByEmail.GetPWD")
-	defer spanGetPWD.End()
 	pwd := helper.GetPwd(password)
+	spanGetPWD.End()
 
 	// hashedPassword := helper.HashAndSalt(pwd)
 
@@ -95,7 +95,7 @@ func (u userUseCase) LoginByEmail(ctx context.Context, email string, password st
 	// compare password
 	_, spanComparePassword := tracer.Start(ucaseCtx, "user_usecase.LoginByEmail.ComparePassword")
 	isValidPassword := helper.ComparePasswords(user.Password, pwd)
-	defer spanComparePassword.End()
+	spanComparePassword.End()
 
 	if !isValidPassword {
 		return domain.User{}, errors.New("username atau password salah")

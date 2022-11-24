@@ -4,6 +4,7 @@ import (
 	"social/constant"
 	"social/domain"
 	"social/middlewares"
+	"social/opentelemetry"
 
 	"github.com/gofiber/fiber/v2"
 	"gopkg.in/guregu/null.v4"
@@ -27,6 +28,7 @@ func (t *threadHandler) Run(db *gorm.DB) {
 
 	threadRoute.Get("/", t.GetThread)
 	threadRoute.Get("/replies", t.GetReplies)
+	threadRoute.Post("/like", middlewares.JWT(), t.LikeThread)
 
 }
 
@@ -204,6 +206,49 @@ func (t *threadHandler) GetReplies(c *fiber.Ctx) error {
 	return c.Status(constant.HTTPResponseOK).JSON(fiber.Map{
 		"message": "success",
 		"data":    replies,
+		"code":    constant.HTTPResponseOK,
+	})
+}
+
+func (t *threadHandler) LikeThread(c *fiber.Ctx) error {
+	// recover
+	defer func() {
+		if r := recover(); r != nil {
+			c.Status(constant.HTTPResponseInternalServerError).JSON(fiber.Map{
+				"message": r,
+				"code":    constant.HTTPResponseInternalServerError,
+			})
+		}
+	}()
+
+	// get user from context
+	user := c.Locals("user").(domain.User)
+
+	ctx := c.UserContext()
+
+	tracer := opentelemetry.GetTracer()
+	ctrlCtx, span := tracer.Start(ctx, "LikeThread")
+	defer span.End()
+
+	req := LikeThreadRequest{}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(constant.HTTPResponseBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+			"code":    constant.HTTPResponseBadRequest,
+		})
+	}
+
+	err := t.usecase.LikeThread(ctrlCtx, req.ThreadID, user.ID)
+	if err != nil {
+		return c.Status(constant.HTTPResponseBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+			"code":    constant.HTTPResponseBadRequest,
+		})
+	}
+
+	return c.Status(constant.HTTPResponseOK).JSON(fiber.Map{
+		"message": "success",
 		"code":    constant.HTTPResponseOK,
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"social/domain"
+	"social/opentelemetry"
 
 	"gorm.io/gorm"
 )
@@ -14,16 +15,39 @@ type threadRepoPg struct {
 	db *gorm.DB
 }
 
-// LikeThread implements domain.ThreadRepo
-func (t threadRepoPg) LikeThread(ctx context.Context, threadID uint, userID uint) (domain.Like, error) {
+// CheckLiked implements domain.ThreadRepo
+func (t threadRepoPg) CheckLiked(ctx context.Context, threadID uint, userID uint) (bool, error) {
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.CheckLiked")
+	defer span.End()
+
 	var like domain.Like
 	err := t.db.Where("thread_id = ? AND user_id = ?", threadID, userID).First(&like).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return like, err
+		return false, err
 	}
 
 	if like.ID != 0 {
-		return like, errors.New("user has")
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// LikeThread implements domain.ThreadRepo
+func (t threadRepoPg) LikeThread(ctx context.Context, threadID uint, userID uint) (domain.Like, error) {
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.LikeThread")
+	defer span.End()
+
+	var like domain.Like
+	err := t.db.Where("thread_id = ? AND user_id = ?", threadID, userID).First(&like).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return domain.Like{}, err
+	}
+
+	if like.ID != 0 {
+		return like, errors.New("you already liked this thread")
 	}
 
 	like.ThreadID = threadID
@@ -31,20 +55,28 @@ func (t threadRepoPg) LikeThread(ctx context.Context, threadID uint, userID uint
 
 	err = t.db.Create(&like).Error
 	if err != nil {
-		return like, errors.New("failed to like thread")
+		return domain.Like{}, errors.New("failed to like thread")
 	}
 
 	return like, nil
 }
 
-func (t threadRepoPg) UnlikeThread(ctx context.Context, thread domain.Thread) error {
-	err := t.db.Where("thread_id = ? AND user_id = ?", thread.ID, thread.UserID).Delete(&thread).Error
+func (t threadRepoPg) UnlikeThread(ctx context.Context, threadID, userID uint) error {
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.UnlikeThread")
+	defer span.End()
 
+	err := t.db.Where("thread_id = ? AND user_id = ?", threadID, userID).Unscoped().Delete(&domain.Like{}).Error
 	return err
 }
 
 // GetReplies implements domain.ThreadRepo
 func (t threadRepoPg) GetReplies(ctx context.Context, threadID uint, page int) ([]domain.Thread, error) {
+
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.GetReplies")
+	defer span.End()
+
 	var threads []domain.Thread
 
 	err := t.db.Where("reply_to = ?", threadID).Limit(10).Offset((page - 1) * 10).Find(&threads).Error
@@ -58,6 +90,11 @@ func (t threadRepoPg) GetReplies(ctx context.Context, threadID uint, page int) (
 
 // GetThread implements domain.ThreadRepo
 func (t threadRepoPg) GetThread(ctx context.Context, threadID uint) (domain.Thread, error) {
+
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.GetThread")
+	defer span.End()
+
 	var thread domain.Thread
 	err := t.db.
 		Preload("ThreadPhotos").
@@ -79,6 +116,10 @@ func (t threadRepoPg) GetThread(ctx context.Context, threadID uint) (domain.Thre
 
 // WithTx implements domain.ThreadRepo
 func (t threadRepoPg) WithTx(ctx context.Context, tx *gorm.DB) domain.ThreadRepo {
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.WithTx")
+	defer span.End()
+
 	return &threadRepoPg{
 		db: tx,
 	}
@@ -86,6 +127,11 @@ func (t threadRepoPg) WithTx(ctx context.Context, tx *gorm.DB) domain.ThreadRepo
 
 // Insert implements domain.ThreadRepo
 func (t threadRepoPg) Insert(ctx context.Context, thread *domain.Thread) error {
+
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.Insert")
+	defer span.End()
+
 	err := t.db.Create(thread).Error
 	if err != nil {
 		fmt.Println(err)
@@ -97,6 +143,10 @@ func (t threadRepoPg) Insert(ctx context.Context, thread *domain.Thread) error {
 
 // InsertThreadPhoto implements domain.ThreadRepo
 func (t threadRepoPg) InsertThreadPhoto(ctx context.Context, threadPhoto *domain.ThreadPhoto) error {
+	tracer := opentelemetry.GetTracer()
+	_, span := tracer.Start(ctx, "thread_repo_pg.InsertThreadPhoto")
+	defer span.End()
+
 	err := t.db.Create(threadPhoto).Error
 	if err != nil {
 		fmt.Println(err)

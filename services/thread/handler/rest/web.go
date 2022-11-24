@@ -13,3 +13,7 @@ type GetRepliesRequest struct {
 	ThreadID uint `json:"thread_id" query:"thread_id"`
 	Page     int  `json:"page" query:"page"`
 }
+
+type LikeThreadRequest struct {
+	ThreadID uint `json:"thread_id" query:"thread_id"`
+}

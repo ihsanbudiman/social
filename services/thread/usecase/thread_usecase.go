@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"social/domain"
+	"social/opentelemetry"
 
 	"gorm.io/gorm"
 )
@@ -13,8 +14,50 @@ type threadUseCase struct {
 }
 
 // LikeThread implements domain.ThreadUseCase
-func (t threadUseCase) LikeThread(ctx context.Context, threadID uint) (bool, error) {
-	return false, nil
+func (t threadUseCase) LikeThread(ctx context.Context, threadID, userID uint) error {
+
+	tracer := opentelemetry.GetTracer()
+	ucaseCtx, span := tracer.Start(ctx, "usecase.LikeThread")
+	defer span.End()
+	if threadID == 0 {
+		return errors.New("thread id is required")
+	}
+
+	if userID == 0 {
+		return errors.New("user id is required")
+	}
+
+	// check if thread is exist
+	thread, err := t.repo.GetThread(ucaseCtx, threadID)
+	if err != nil {
+		return err
+	}
+
+	if thread.ID == 0 {
+		return errors.New("thread is not exist")
+	}
+
+	// check if user is already like the thread
+	isLike, err := t.repo.CheckLiked(ucaseCtx, threadID, userID)
+	if err != nil {
+		return err
+	}
+
+	if !isLike {
+		// check if user already liked the thread
+		like, err := t.repo.LikeThread(ucaseCtx, threadID, userID)
+		if err != nil && like.ID == 0 {
+			return err
+		}
+		return nil
+	}
+
+	err = t.repo.UnlikeThread(ucaseCtx, threadID, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // InsertThreadPhoto implements domain.ThreadUseCase
